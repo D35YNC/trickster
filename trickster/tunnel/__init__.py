@@ -6,7 +6,8 @@ from trickster.transport import TricksterPayload
 
 
 class Portal(abc.ABC):
-    def __init__(self):
+    def __init__(self, endpoint: tuple[str, int] = None):
+        self._endpoint = endpoint
         self._master_socket = None
         self._sockets = []
 
@@ -37,12 +38,24 @@ class Portal(abc.ABC):
     def sockets(self) -> list[socket.socket]:
         return self._sockets
 
+    @property
+    def endpoint(self) -> tuple[str, int]:
+        return self._endpoint
+
+    @endpoint.setter
+    def endpoint(self, value):
+        if isinstance(value, tuple) and len(value) == 2:
+            if isinstance(value[0], str) and isinstance(value[1], int):
+                self._endpoint = value
+                return
+        raise ValueError()
+
 
 class Tunnel:
     def __init__(self, enter_portal: Portal, exit_portal: Portal, target: tuple[str, int] = None):
         self.enter = enter_portal
         self.exit = exit_portal
-        self.dst = target
+        self.enter.endpoint = target
 
     def run(self):
         while True:
@@ -55,8 +68,6 @@ class Tunnel:
                     else:
                         id, payload = self.enter.process_data(sock)
                         if 0 < id:
-                            if self.dst:
-                                payload.dst = self.dst
                             self.exit.send_to(id, payload, True)
                         else:
                             self.enter.unregister(sock)
@@ -64,8 +75,6 @@ class Tunnel:
                 elif sock in self.enter.sockets:
                     id, payload = self.enter.process_data(sock)
                     if 0 < id:
-                        if self.dst:
-                            payload.dst = self.dst
                         self.exit.send_to(id, payload, True)
                     elif self.enter.need_accept:
                         self.enter.unregister(sock)

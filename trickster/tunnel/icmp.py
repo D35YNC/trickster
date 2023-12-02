@@ -9,11 +9,10 @@ from trickster.transport import TricksterPayload
 class ICMPPortal(Portal):
     ICMP_BUFFER_SIZE = 65535
 
-    def __init__(self, *, proxy: tuple[str, int] = None):
-        super().__init__()
+    def __init__(self, *, endpoint: tuple[str, int] = None):
+        super().__init__(endpoint)
         self._master_socket = create_icmp_socket()
         self._sockets.append(self._master_socket)
-        self.proxy = proxy
         self.s = {}
 
     def process_data(self, sock: socket.socket) -> tuple[int, TricksterPayload]:
@@ -49,7 +48,7 @@ class ICMPPortal(Portal):
 
         if exit:
             packet = ICMPPacket.create(ICMPType.ECHO_REQUEST, 0, id, 0, payload.data, payload.src, payload.dst)
-            self._master_socket.sendto(bytes(packet), (self.proxy[0], 1))
+            self._master_socket.sendto(bytes(packet), (self._endpoint[0], 1))
         else:
             packet = ICMPPacket.create(ICMPType.ECHO, 0, id, 0, payload.data, payload.src, payload.dst)
             self._master_socket.sendto(bytes(packet), (self.s[packet.id][0], 0))
