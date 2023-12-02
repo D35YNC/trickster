@@ -15,11 +15,17 @@ Trickster is a software for encapsulating protocols into each other written in p
 
 ### TODO
 - Tunnels like `ssh -R`
-- SOCKS5
-- Reverse SOCKS5
+- Socks functionality
+- TUN-TAP FUNCTIONALITY ????
 - E2EE
 - Docs (fucj)
 - idk mb i forgot somethin
+
+### Transport todo
+- TLS
+- HTTP/HTTPS mb ?
+- UDP
+- SOCKS5 + Reverse SOCKS5
 
 ## Read before use
 tbd...
