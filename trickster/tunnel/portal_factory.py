@@ -11,8 +11,8 @@ class PortalFactory:
         u = urlparse(url)
         match u.scheme.lower():
             case "tcp":
+                ip, port = u.netloc.split(':')
                 if u.path == "/enter":
-                    ip, port = u.netloc.split(':')
                     return TCPPortal(bind=(ip, int(port)))
                 else:
                     return TCPPortal(endpoint=(ip, int(port)))

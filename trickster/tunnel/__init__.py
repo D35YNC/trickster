@@ -69,7 +69,7 @@ class Tunnel:
                         id, payload = self.enter.process_data(sock)
                         if 0 < id:
                             self.exit.send_to(id, payload, True)
-                        else:
+                        elif self.enter.need_accept:
                             self.enter.unregister(sock)
 
                 elif sock in self.enter.sockets:

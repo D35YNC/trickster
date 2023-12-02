@@ -31,12 +31,11 @@ class TCPPortal(Portal):
         return id_, TricksterPayload.create(sock.getpeername(), self._endpoint, data)
 
     def send_to(self, id: int, payload: TricksterPayload, exit: bool):
-        if id in self._connections:
-            self._connections[id].send(payload.data)
-        else:
+        if id not in self._connections:
             sock = create_tcp_socket(True, payload.dst)
             self.register(sock, id)
-            sock.send(payload.data)
+
+        self._connections[id].send(payload.data)
 
     def register(self, sock: socket.socket, id: int = None):
         if not id:
