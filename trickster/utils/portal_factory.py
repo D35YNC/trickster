@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 
 from trickster.tunnel import Portal
 from trickster.tunnel.tcp import TCPPortal
+from trickster.tunnel.udp import UDPPortal
 from trickster.tunnel.icmp import ICMPPortal
 
 
@@ -21,6 +22,13 @@ class PortalFactory:
                     return TCPPortal(bind=dst, is_enter=True)
                 else:
                     return TCPPortal(endpoint=dst, is_enter=False)
+
+            case "udp":
+                if u.path == "/enter":
+                    return UDPPortal(bind=dst, is_enter=True)
+                else:
+                    return UDPPortal(endpoint=dst, is_enter=False)
+
             case "icmp":
                 if u.path == "/enter":
                     return ICMPPortal(endpoint=dst, is_enter=True)
