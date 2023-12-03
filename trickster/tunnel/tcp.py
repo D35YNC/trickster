@@ -13,7 +13,7 @@ class TCPPortal(Portal):
         super().__init__(endpoint, is_enter)
         self._connections = {}
         if bind:
-            self._master_socket = create_tcp_socket(False, bind)
+            self._master_socket = create_tcp_socket(bind, True)
             self._sockets.append(self._master_socket)
 
     def process_data(self, sock: socket.socket) -> tuple[int | None, TricksterPayload | None]:
@@ -38,7 +38,7 @@ class TCPPortal(Portal):
 
     def send_to(self, id: int, payload: TricksterPayload):
         if id not in self._connections:
-            sock = create_tcp_socket(True, payload.dst)
+            sock = create_tcp_socket(self._endpoint if self._endpoint else payload.dst)
             self.register(sock, id)
 
         if self._endpoint and not self._is_enter:

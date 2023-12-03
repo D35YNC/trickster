@@ -27,7 +27,10 @@ class TricksterPayload:
 
     @classmethod
     def parse(cls, data: bytes):
-        src, src_port, dst, dst_port, data = struct.unpack(TricksterPayload.get_struct_format(), data)
+        fmt = TricksterPayload.get_struct_format()
+        if 0 < (data_len := len(data) - 12):
+            fmt += f"{data_len}s"
+        src, src_port, dst, dst_port, data = struct.unpack(fmt, data)
         return cls((socket.inet_ntoa(src), src_port), (socket.inet_ntoa(dst), dst_port), data)
 
     @staticmethod
@@ -40,13 +43,14 @@ class TricksterPayload:
 
     @abc.abstractmethod
     def __bytes__(self) -> bytes:
-        format = TricksterPayload.get_struct_format()
+        fmt = TricksterPayload.get_struct_format()
         args = [socket.inet_aton(self.src[0]), self.src[1], socket.inet_aton(self.dst[0]), self.dst[1]]
         if 0 < len(self.data):
+            # TODO: Rewrite pad-unpad
             self.data += b"\x00\x11\x22" * (len(self.data) % 2)  # Add padding
-            format += f"{len(self.data)}s"
+            fmt += f"{len(self.data)}s"
             args.append(self.data)
-        return struct.pack(format, *args)
+        return struct.pack(fmt, *args)
 
     @staticmethod
     def get_struct_format() -> str:

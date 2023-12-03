@@ -3,7 +3,8 @@ import argparse
 from trickster.tunnel.portal_factory import PortalFactory
 from trickster.tunnel import Tunnel
 
-if __name__ == "__main__":
+
+def tunnel_main():
     parser = argparse.ArgumentParser(description="trickster.tunnel is sussy amongus sus impostor tunnel")
 
     parser.add_argument("enter", type=str,
@@ -24,3 +25,8 @@ if __name__ == "__main__":
     else:
         tun = Tunnel(enter_portal, exit_portal)
     tun.run()
+
+
+if __name__ == "__main__":
+    tunnel_main()
+

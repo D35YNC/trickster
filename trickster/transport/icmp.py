@@ -48,24 +48,22 @@ class ICMPPacket(Packet):
 
     @classmethod
     def parse(cls, packet: bytes):
-        ip_packet_format = "BBHHHBBH4s4s"
+        # ip_packet_format = "BBHHHBBH4s4s"
         icmp_packet_format = ICMPHeader.get_struct_format() + TricksterPayload.get_struct_format().lstrip('!')
-        data = ""
-
         ip_packet, icmp_packet = packet[:20], packet[20:]  # split ip header
-        ip_packet = struct.unpack(ip_packet_format, ip_packet)
+        # ip_packet = struct.unpack(ip_packet_format, ip_packet)
         # src_ip = ip_packet[8]
-        icmp_pack_len = struct.calcsize(icmp_packet_format)
-        packet_len = len(icmp_packet) - icmp_pack_len
+        icmp_packet_size = struct.calcsize(icmp_packet_format)
+        data_size = len(icmp_packet) - icmp_packet_size
 
-        if 0 < packet_len:
-            icmp_data_str = f"{packet_len}s"
-            data = struct.unpack(icmp_data_str, icmp_packet[icmp_pack_len:])[0]
+        data = b""
+        if 0 < data_size:
+            icmp_data_str = f"{data_size}s"
+            data = struct.unpack(icmp_data_str, icmp_packet[icmp_packet_size:])[0]
         try:
-            type, code, checksum, id, sequence, src, src_port, dst, dst_port = struct.unpack(icmp_packet_format, icmp_packet[:icmp_pack_len])
+            type, code, checksum, id, sequence, src, src_port, dst, dst_port = struct.unpack(icmp_packet_format, icmp_packet[:icmp_packet_size])
         except struct.error:
             return cls(ICMPHeader(0, 0, 0, 0), TricksterPayload(('', 0), ('', 0), bytes()))
-        # print(src_ip, src)
         else:
             return cls(
                 ICMPHeader(type, code, id, sequence, checksum),
