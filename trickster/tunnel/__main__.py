@@ -1,6 +1,6 @@
 import argparse
 
-from trickster.tunnel.portal_factory import PortalFactory
+from trickster.utils.portal_factory import PortalFactory
 from trickster.tunnel import Tunnel
 
 
