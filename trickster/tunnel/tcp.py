@@ -1,16 +1,16 @@
 import logging
 import socket
 
-from trickster.tunnel import Portal
+from trickster.transport import TricksterPayload
 from trickster.transport.tcp import create_tcp_socket
 
-from trickster.transport import TricksterPayload
+from trickster.tunnel import Portal
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class TCPPortal(Portal):
-    TCP_BUFFER_SIZE = 1024
+    BUFFER_SIZE = 1024
 
     def __init__(self, *, bind: tuple[str, int] = None, endpoint: tuple[str, int] = None, is_enter: bool = False):
         super().__init__(endpoint, is_enter)
@@ -27,7 +27,7 @@ class TCPPortal(Portal):
             self.register(s)
             return None, None
 
-        payload = sock.recv(TCPPortal.TCP_BUFFER_SIZE)
+        payload = sock.recv(TCPPortal.BUFFER_SIZE)
         if not payload:
             self.unregister(sock)
             return None, None

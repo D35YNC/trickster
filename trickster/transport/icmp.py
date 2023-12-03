@@ -1,12 +1,12 @@
+import enum
 import socket
 import struct
-import enum
-from dataclasses import dataclass
+import dataclasses
 
 from trickster.transport import Header, TricksterPayload, Packet
 
 
-def create_icmp_socket(*args):
+def create_icmp_socket():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
     except socket.error:
@@ -20,7 +20,7 @@ class ICMPType(enum.Enum):
     ECHO_REQUEST = 8
 
 
-@dataclass
+@dataclasses.dataclass
 class ICMPHeader(Header):
     type: ICMPType
     code: int
@@ -37,7 +37,7 @@ class ICMPHeader(Header):
         return struct.pack(ICMPHeader.get_struct_format(), *args)
 
 
-@dataclass
+@dataclasses.dataclass
 class ICMPPacket(Packet):
     @classmethod
     def create(cls, type: ICMPType, code: int, id: int, sequence: int, dst: tuple[str, int], data: bytes):

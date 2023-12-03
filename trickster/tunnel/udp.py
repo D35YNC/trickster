@@ -1,9 +1,10 @@
 import logging
 import socket
 
+from trickster.transport import TricksterPayload
 from trickster.transport.udp import create_udp_socket
+
 from trickster.tunnel import Portal
-from trickster.tunnel import TricksterPayload
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -3,8 +3,8 @@ import select
 import socket
 
 from trickster.transport import TricksterPayload
-
 from trickster.utils.logging import create_full_logger
+
 _LOGGER = create_full_logger(__name__)
 
 

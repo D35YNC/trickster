@@ -1,7 +1,7 @@
 import argparse
 
-from trickster.utils.portal_factory import PortalFactory
 from trickster.tunnel import Tunnel
+from trickster.utils.portal_factory import PortalFactory
 
 
 def tunnel_main():

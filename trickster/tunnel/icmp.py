@@ -2,15 +2,18 @@ import logging
 import socket
 
 from trickster.tunnel import Portal
+
 from trickster.transport.icmp import create_icmp_socket
-from trickster.transport.icmp import ICMPType, ICMPPacket
+from trickster.transport.icmp import ICMPType
+from trickster.transport.icmp import ICMPPacket
+
 from trickster.transport import TricksterPayload
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ICMPPortal(Portal):
-    ICMP_BUFFER_SIZE = 65535
+    BUFFER_SIZE = 65535
 
     def __init__(self, *, endpoint: tuple[str, int] = None, is_enter: bool = False):
         super().__init__(endpoint, is_enter)
@@ -20,9 +23,9 @@ class ICMPPortal(Portal):
         _LOGGER.debug(f"{self.__class__.__name__} initialized")#: {self}")
 
     def process_data(self, sock: socket.socket) -> tuple[int | None, TricksterPayload | None]:
-        packet, addr = sock.recvfrom(ICMPPortal.ICMP_BUFFER_SIZE)
+        data, addr = sock.recvfrom(ICMPPortal.BUFFER_SIZE)
         try:
-            packet = ICMPPacket.parse(packet)
+            packet = ICMPPacket.parse(data)
         except ValueError:
             _LOGGER.error(f"Malformatted packet received: {data}")
             return None, None
