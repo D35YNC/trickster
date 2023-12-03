@@ -40,10 +40,10 @@ class ICMPHeader(Header):
 @dataclass
 class ICMPPacket(Packet):
     @classmethod
-    def create(cls, type: ICMPType, code: int, id: int, sequence: int, data: bytes, src, dst: tuple[str, int]):
+    def create(cls, type: ICMPType, code: int, id: int, sequence: int, dst: tuple[str, int], data: bytes):
         return cls(
             ICMPHeader(type, code, id, sequence),
-            TricksterPayload(src, dst, data)
+            TricksterPayload(id, dst, data)
         )
 
     @classmethod
@@ -61,12 +61,12 @@ class ICMPPacket(Packet):
             icmp_data_str = f"{data_size}s"
             data = struct.unpack(icmp_data_str, icmp_packet[icmp_packet_size:])[0]
         try:
-            type, code, checksum, id, sequence, src, src_port, dst, dst_port = struct.unpack(icmp_packet_format, icmp_packet[:icmp_packet_size])
+            type, code, checksum, id, sequence, _, dst, dst_port = struct.unpack(icmp_packet_format, icmp_packet[:icmp_packet_size])
         except struct.error:
-            return cls(ICMPHeader(0, 0, 0, 0), TricksterPayload(('', 0), ('', 0), bytes()))
+            return None
         else:
             return cls(
                 ICMPHeader(type, code, id, sequence, checksum),
-                TricksterPayload((socket.inet_ntoa(src), src_port), (socket.inet_ntoa(dst), dst_port), data)
+                TricksterPayload(id, (socket.inet_ntoa(dst), dst_port), data)
             )
 

@@ -3,6 +3,11 @@ import dataclasses
 import socket
 import struct
 
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Hash import SHA512
+from Crypto.Random import get_random_bytes
+from Crypto.Cipher import AES
+
 
 @dataclasses.dataclass
 class Header(abc.ABC):
@@ -15,38 +20,48 @@ class Header(abc.ABC):
         raise NotImplementedError()
 
 
+# TODO: Rewrite pad-unpad
 @dataclasses.dataclass
 class TricksterPayload:
-    src: tuple[str, int]
+    session_id: int
     dst: tuple[str, int]
     data: bytes
 
     @classmethod
-    def create(cls, src: tuple[str, int], dst: tuple[str, int], data: bytes):
-        return cls(src, dst, data)
+    def create(cls, session_id: int, dst: tuple[str, int], data: bytes):
+        return cls(session_id, dst, data.rstrip(b"\x00\x11\x22"))
+    # def create(cls, src: tuple[str, int], dst: tuple[str, int], data: bytes):
+        # return cls(src, dst, data)
 
     @classmethod
     def parse(cls, data: bytes):
         fmt = TricksterPayload.get_struct_format()
-        if 0 < (data_len := len(data) - 12):
+        if 0 < (data_len := len(data) - struct.calcsize(fmt)):
             fmt += f"{data_len}s"
-        src, src_port, dst, dst_port, data = struct.unpack(fmt, data)
-        return cls((socket.inet_ntoa(src), src_port), (socket.inet_ntoa(dst), dst_port), data)
+        session_id, dst, dst_port, data = struct.unpack(fmt, data)
+        return cls(session_id, (socket.inet_ntoa(dst), dst_port), data.rstrip(b"\x00\x11\x22"))
 
     @staticmethod
-    def encrypt(packet: bytes, key: bytes) -> bytes:
-        raise NotImplementedError()
+    def encrypt(packet: bytes, password: str) -> bytes:
+        print('Encrypt')
+        salt = get_random_bytes(16)
+        key = PBKDF2(password, salt, 32, count=100000, hmac_hash_module=SHA512)
+        aes = AES.new(key, AES.MODE_GCM)
+        cipher, tag = aes.encrypt_and_digest(packet)
+        return salt + aes.nonce + cipher + tag
 
     @staticmethod
-    def decrypt(packet: bytes, key: bytes) -> bytes:
-        raise NotImplementedError()
+    def decrypt(packet: bytes, password: str) -> bytes:
+        salt, nonce, cipher, tag = packet[:16], packet[16:32], packet[32:-16], packet[-16:]
+        key = PBKDF2(password, salt, count=100000, hmac_hash_module=SHA512)
+        aes = AES.new(key, AES.MODE_GCM, nonce)
+        return aes.decrypt_and_verify(cipher, tag)
 
     @abc.abstractmethod
     def __bytes__(self) -> bytes:
         fmt = TricksterPayload.get_struct_format()
-        args = [socket.inet_aton(self.src[0]), self.src[1], socket.inet_aton(self.dst[0]), self.dst[1]]
+        args = [self.session_id, socket.inet_aton(self.dst[0]), self.dst[1]]
         if 0 < len(self.data):
-            # TODO: Rewrite pad-unpad
             self.data += b"\x00\x11\x22" * (len(self.data) % 2)  # Add padding
             fmt += f"{len(self.data)}s"
             args.append(self.data)
@@ -54,7 +69,7 @@ class TricksterPayload:
 
     @staticmethod
     def get_struct_format() -> str:
-        return "!4sH4sH"
+        return "!H4sH"
 
 
 @dataclasses.dataclass
@@ -75,14 +90,6 @@ class Packet(abc.ABC):
     def __bytes__(self):
         self.header.checksum = Packet.checksum(bytes(self.header) + bytes(self.payload))
         return bytes(self.header) + bytes(self.payload)
-
-    def __getattr__(self, item):
-        if hasattr(self.header, item):
-            return getattr(self.header, item)
-        elif hasattr(self.payload, item):
-            return getattr(self.payload, item)
-        else:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     @staticmethod
     def checksum(packet: bytes) -> int:
