@@ -9,20 +9,20 @@ class PortalFactory:
     @staticmethod
     def from_url(url: str) -> Portal:
         u = urlparse(url)
+        dst = None
+        if ':' in u.netloc:
+            ip, port = u.netloc.split(':', 1)
+            dst = (ip, int(port))
+        elif u.netloc:
+            dst = (u.netloc, None)
         match u.scheme.lower():
             case "tcp":
-                ip, port = u.netloc.split(':')
                 if u.path == "/enter":
-                    return TCPPortal(bind=(ip, int(port)))
+                    return TCPPortal(bind=dst, is_enter=True)
                 else:
-                    return TCPPortal(endpoint=(ip, int(port)))
+                    return TCPPortal(endpoint=dst, is_enter=False)
             case "icmp":
                 if u.path == "/enter":
-                    return ICMPPortal()
+                    return ICMPPortal(endpoint=dst, is_enter=True)
                 else:
-                    if ':' in u.netloc:
-                        ip, port = u.netloc.split(':')
-                    else:
-                        ip = u.netloc
-                        port = 0
-                    return ICMPPortal(endpoint=(ip, int(port)))
+                    return ICMPPortal(endpoint=dst, is_enter=False)

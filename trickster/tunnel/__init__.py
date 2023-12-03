@@ -6,8 +6,9 @@ from trickster.transport import TricksterPayload
 
 
 class Portal(abc.ABC):
-    def __init__(self, endpoint: tuple[str, int] = None):
+    def __init__(self, endpoint: tuple[str, int] = None, is_enter: bool = False):
         self._endpoint = endpoint
+        self._is_enter = is_enter
         self._master_socket = None
         self._sockets = []
 
@@ -16,23 +17,8 @@ class Portal(abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def send_to(self, id: int, data: TricksterPayload, exit: bool):
+    def send_to(self, id: int, data: TricksterPayload):
         raise NotImplementedError()
-
-    def register(self, sock: socket.socket, id: int = None):
-        pass
-
-    def unregister(self, sock: socket.socket):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def need_accept(self):
-        raise NotImplementedError()
-
-    @property
-    def master_socket(self) -> socket.socket:
-        return self._master_socket
 
     @property
     def sockets(self) -> list[socket.socket]:
@@ -44,11 +30,14 @@ class Portal(abc.ABC):
 
     @endpoint.setter
     def endpoint(self, value):
-        if isinstance(value, tuple) and len(value) == 2:
+        if value is None:
+            self._endpoint = value
+            return
+        elif isinstance(value, tuple) and len(value) == 2:
             if isinstance(value[0], str) and isinstance(value[1], int):
                 self._endpoint = value
                 return
-        raise ValueError()
+        raise ValueError(f"Cant assign {value} to tuple[str, int]")
 
 
 class Tunnel:
@@ -61,39 +50,12 @@ class Tunnel:
         while True:
             r, w, x = select.select(self.enter.sockets + self.exit.sockets, [], [])
             for sock in r:
-                if sock is self.enter.master_socket:
-                    if self.enter.need_accept:
-                        s, a = self.enter.master_socket.accept()
-                        self.enter.register(s)
-                    else:
-                        id, payload = self.enter.process_data(sock)
-                        if 0 < id:
-                            self.exit.send_to(id, payload, True)
-                        elif self.enter.need_accept:
-                            self.enter.unregister(sock)
-
-                elif sock in self.enter.sockets:
-                    id, payload = self.enter.process_data(sock)
-                    if 0 < id:
-                        self.exit.send_to(id, payload, True)
-                    elif self.enter.need_accept:
-                        self.enter.unregister(sock)
-
-                elif sock is self.exit.master_socket:
-                    if self.exit.need_accept:
-                        s, a = self.exit.master_socket.accept()
-                        self.exit.register(s)
-                    else:
-                        id, payload = self.exit.process_data(sock)
-                        if 0 < id:
-                            self.enter.send_to(id, payload, False)
-                        elif self.exit.need_accept:
-                            self.exit.unregister(sock)
+                if sock in self.enter.sockets:
+                    id_, payload = self.enter.process_data(sock)
+                    if id_:
+                        self.exit.send_to(id_, payload)
 
                 elif sock in self.exit.sockets:
-                    id, payload = self.exit.process_data(sock)
-                    if 0 < id:
-                        self.enter.send_to(id, payload, False)
-                    elif self.exit.need_accept:
-                        self.exit.unregister(sock)
-
+                    id_, payload = self.exit.process_data(sock)
+                    if id_:
+                        self.enter.send_to(id_, payload)
