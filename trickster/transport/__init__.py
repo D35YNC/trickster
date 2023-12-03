@@ -30,8 +30,6 @@ class TricksterPayload:
     @classmethod
     def create(cls, session_id: int, dst: tuple[str, int], data: bytes):
         return cls(session_id, dst, data.rstrip(b"\x00\x11\x22"))
-    # def create(cls, src: tuple[str, int], dst: tuple[str, int], data: bytes):
-        # return cls(src, dst, data)
 
     @classmethod
     def parse(cls, data: bytes):
@@ -42,19 +40,20 @@ class TricksterPayload:
         return cls(session_id, (socket.inet_ntoa(dst), dst_port), data.rstrip(b"\x00\x11\x22"))
 
     @staticmethod
-    def encrypt(packet: bytes, password: str) -> bytes:
-        print('Encrypt')
+    def encrypt(data: bytes, password: str) -> bytes:
         salt = get_random_bytes(16)
         key = PBKDF2(password, salt, 32, count=100000, hmac_hash_module=SHA512)
         aes = AES.new(key, AES.MODE_GCM)
-        cipher, tag = aes.encrypt_and_digest(packet)
+        aes.update(salt)
+        cipher, tag = aes.encrypt_and_digest(data)
         return salt + aes.nonce + cipher + tag
 
     @staticmethod
-    def decrypt(packet: bytes, password: str) -> bytes:
-        salt, nonce, cipher, tag = packet[:16], packet[16:32], packet[32:-16], packet[-16:]
-        key = PBKDF2(password, salt, count=100000, hmac_hash_module=SHA512)
-        aes = AES.new(key, AES.MODE_GCM, nonce)
+    def decrypt(data: bytes, password: str) -> bytes:
+        salt, nonce, cipher, tag = data[:16], data[16:32], data[32:-16], data[-16:]
+        key = PBKDF2(password, salt, 32, count=100000, hmac_hash_module=SHA512)
+        aes = AES.new(key, AES.MODE_GCM, nonce=nonce)
+        aes.update(salt)
         return aes.decrypt_and_verify(cipher, tag)
 
     @abc.abstractmethod
