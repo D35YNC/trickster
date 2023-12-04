@@ -15,9 +15,9 @@ def verify_tunnel_opts(bind: str, port: int, host: str, hostport: int):
         return False
 
 
-def create_tunnel_parser(enter_portals: list[str], transport_portals: list[str], universal_portals: list[str]) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("trickster-tunnel",
-                                     description="trickster.tunnel description TODO")
+def create_client_parser(enter_portals: list[str], transport_portals: list[str], universal_portals: list[str]) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser("trickster-client",
+                                     description="trickster.client description TODO")
     parser.add_argument("-s", "--server", type=str, metavar="IP",
                         help="remote server hostname or ip")
     parser.add_argument("-p", "--port", type=int,
