@@ -4,8 +4,6 @@ import socket
 import struct
 
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA512
-from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 
 
@@ -40,18 +38,16 @@ class TricksterPayload:
         return cls(session_id, (socket.inet_ntoa(dst), dst_port), data.rstrip(b"\x00\x11\x22"))
 
     @staticmethod
-    def encrypt(data: bytes, password: str) -> bytes:
+    def encrypt(data: bytes, key: bytes) -> bytes:
         salt = get_random_bytes(16)
-        key = PBKDF2(password, salt, 32, count=100000, hmac_hash_module=SHA512)
         aes = AES.new(key, AES.MODE_GCM)
         aes.update(salt)
         cipher, tag = aes.encrypt_and_digest(data)
         return salt + aes.nonce + cipher + tag
 
     @staticmethod
-    def decrypt(data: bytes, password: str) -> bytes:
+    def decrypt(data: bytes, key: bytes) -> bytes:
         salt, nonce, cipher, tag = data[:16], data[16:32], data[32:-16], data[-16:]
-        key = PBKDF2(password, salt, 32, count=100000, hmac_hash_module=SHA512)
         aes = AES.new(key, AES.MODE_GCM, nonce=nonce)
         aes.update(salt)
         return aes.decrypt_and_verify(cipher, tag)
