@@ -1,6 +1,8 @@
 import argparse
 
-from trickster.tunnel import __version__
+from trickster import __version__ as package_version
+from trickster.client import __version__ as client_version
+from trickster.server import __version__ as server_version
 
 
 def verify_tunnel_opts(bind: str, port: int, host: str, hostport: int):
@@ -16,7 +18,7 @@ def verify_tunnel_opts(bind: str, port: int, host: str, hostport: int):
 
 
 def create_client_parser(enter_portals: list[str], transport_portals: list[str], universal_portals: list[str]) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("trickster-client",
+    parser = argparse.ArgumentParser("trickster-client", formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description="trickster.client description TODO")
     parser.add_argument("-s", "--server", type=str, metavar="IP",
                         help="remote server hostname or ip")
@@ -43,12 +45,13 @@ def create_client_parser(enter_portals: list[str], transport_portals: list[str],
                         help="socket timeout in seconds")
     parser.add_argument("-c", "--config", type=argparse.FileType("r+", encoding="utf-8"),
                         help="config")
-    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s v{__version__}")
+    parser.add_argument("-V", "--version", action="version",
+                        version=f"trickster v{package_version}\ntrickster-client v{client_version}")
     return parser
 
 
 def create_server_parser(enter_portals: list[str], transport_portals: list[str], universal_portals: list[str]) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("trickster-server",
+    parser = argparse.ArgumentParser("trickster-server", formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description="trickster.server description TODO")
     parser.add_argument("-A", "--addr", type=str, metavar="IP:PORT",
                         help="bind address")
@@ -67,4 +70,6 @@ def create_server_parser(enter_portals: list[str], transport_portals: list[str],
                         help="socket timeout in seconds")
     parser.add_argument("-c", "--config", type=argparse.FileType("r+", encoding="utf-8"),
                         help="config")
+    parser.add_argument("-V", "--version", action="version",
+                        version=f"trickster v{package_version}\ntrickster-server v{server_version}")
     return parser

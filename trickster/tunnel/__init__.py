@@ -7,7 +7,6 @@ import socket
 from trickster.transport import TricksterPayload
 
 _LOGGER = logging.getLogger(__name__)
-__version__ = "0.1"
 
 
 class PortalSide(enum.Enum):
