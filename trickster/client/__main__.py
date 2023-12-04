@@ -14,7 +14,7 @@ from trickster.utils.encryption import kdf
 _LOGGER = logging.getLogger(__name__)
 
 
-def tunnel_main():
+def client_main():
     enter = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.EntryOnly}
     transport = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.TransportOnly}
     universal = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.Both}
@@ -72,5 +72,5 @@ def tunnel_main():
 
 
 if __name__ == "__main__":
-    tunnel_main()
+    client_main()
 
