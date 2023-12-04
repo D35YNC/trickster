@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from setuptools import setup, find_packages
-from trickster.trickster import __version__
+from trickster import __version__
 
 if __name__ == '__main__':
     setup(name="trickster",
@@ -20,6 +20,5 @@ if __name__ == '__main__':
           python_requires=">=3.10",
           packages=find_packages(),
           install_requires=[line.strip() for line in open("./requirements.txt", "r").readlines()],
-          entry_points={"console_scripts": ["trickster-tunnel = trickster.tunnel.__main__:tunnel_main",
-                                            "trickster-client = trickster.client.__main__:client_main",
+          entry_points={"console_scripts": ["trickster-client = trickster.client.__main__:client_main",
                                             "trickster-server = trickster.server.__main__:server_main"]})
