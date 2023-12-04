@@ -31,12 +31,43 @@ def tunnel_main():
     if args.key:
         _LOGGER.debug(f"Key: {args.key[:8]}...{args.key[-8:]}")
 
-    if args.remote:
-        dst, dst_port = args.remote.split(':')
-        dst_port = int(dst_port)
-        tun = Tunnel(enter_portal, exit_portal, (dst, dst_port))
-    else:
-        tun = Tunnel(enter_portal, exit_portal)
+    portals = []
+    if args.local_tunnel:
+        for lt in set(args.local_tunnel):
+            options = lt.split(':')
+            bind, port, host, hostport = "127.0.0.1", None, None, None
+            match len(options):
+                case 3:
+                    port, host, hostport = options
+                case 4:
+                    bind, port, host, hostport = options
+                case _:
+                    parser.error(f"argument -L is malformed : '{lt}'")
+
+            enter_cls = enter.get(args.tunnel_enter) or universal.get(args.tunnel_enter)
+            if verify_tunnel_opts(bind, port, host, hostport):
+                portals.append(enter_cls(bind=(bind, int(port)),
+                                         endpoint=(host, int(hostport)),
+                                         key=args.key,
+                                         interface=args.interface,
+                                         socket_timeout=args.timeout,
+                                         server_side=False))
+            else:
+                parser.error(f"cant verify -L argument value : '{lt}'")
+
+    if args.reverse_tunnel:
+        _LOGGER.warning("Reverse tunnels not supported now")
+
+    if args.dynamic_tunnel:
+        _LOGGER.warning("Dynamic tunnels not supported now")
+
+    if not portals:
+        parser.error("No tunnels found")
+
+    transport_cls = transport.get(args.tunnel_transport) or universal.get(args.tunnel_transport)
+    transport = transport_cls(server=(args.server, args.port), socket_timeout=args.timeout, server_side=False)
+
+    tun = Tunnel(portals, transport)
     tun.run()
 
 

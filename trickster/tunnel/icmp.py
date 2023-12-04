@@ -2,6 +2,7 @@ import logging
 import socket
 
 from trickster.tunnel import Portal
+from trickster.tunnel import PortalSide
 
 from trickster.transport.icmp import create_icmp_socket
 from trickster.transport.icmp import ICMPType
@@ -15,8 +16,8 @@ _LOGGER = logging.getLogger(__name__)
 class ICMPPortal(Portal):
     BUFFER_SIZE = 65535
 
-    def __init__(self, *, endpoint: tuple[str, int] = None, is_enter: bool = False):
-        super().__init__(endpoint, is_enter)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._master_socket = create_icmp_socket()
         self._sockets.append(self._master_socket)
         self._connections = {}
@@ -49,12 +50,23 @@ class ICMPPortal(Portal):
             return packet.header.id, TricksterPayload.create(packet.header.id, packet.payload.dst, packet.payload.data)
 
     def send_to(self, id: int, payload: TricksterPayload):
-        if self._is_enter:
+        if self._server_side:
+            # ITS SERVER TRANSPORT ENTRY (EXIT -> HERE -> CHANNEL)
+            _LOGGER.debug("Processing payload as SERVER TRANSPORT ENTRY")
             packet = ICMPPacket.create(ICMPType.ECHO, 0, id, 0, payload.dst, payload.data)
-            dst = (self._connections[packet.id][0], 0)
+            dst = (self._connections[packet.header.id][0], 0)
         else:
+            # ITS CLIENT TRANSPORT EXIT (ENTRY -> HERE -> CHANNEL)
+            _LOGGER.debug("Processing payload as CLIENT TRANSPORT EXIT")
             packet = ICMPPacket.create(ICMPType.ECHO_REQUEST, 0, id, 0, payload.dst, payload.data)
-            dst = (self._endpoint[0], 1)
-        _LOGGER.debug(f"Sending {len(packet.payload.data)} payload to {packet.header.id}")
+            dst = (self._server[0], 1)
+
+        _LOGGER.debug(f"Sending {len(packet.payload.data)} bytes payload to {packet.header.id}")
         self._master_socket.sendto(bytes(packet), dst)
 
+    def __contains__(self, item):
+        return item in self._connections.keys()
+
+    @staticmethod
+    def side():
+        return PortalSide.TransportOnly
