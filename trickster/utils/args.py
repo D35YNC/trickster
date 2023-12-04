@@ -45,3 +45,26 @@ def create_tunnel_parser(enter_portals: list[str], transport_portals: list[str],
                         help="config")
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s v{__version__}")
     return parser
+
+
+def create_server_parser(enter_portals: list[str], transport_portals: list[str], universal_portals: list[str]) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser("trickster-server",
+                                     description="trickster.server description TODO")
+    parser.add_argument("-A", "--addr", type=str, metavar="IP:PORT",
+                        help="bind address")
+    parser.add_argument("-i", "--interface", type=str,
+                        help="interface to bind")
+    parser.add_argument("-e", "--tunnel-exit", type=str, choices=enter_portals + universal_portals,
+                        help="protocol for tunnel exit, must match client setting")
+    parser.add_argument("-t", "--tunnel-transport", type=str, choices=transport_portals + universal_portals,
+                        help="protocol for tunneling, must match client setting")
+    kdf_group = parser.add_mutually_exclusive_group()
+    kdf_group.add_argument("-P", "--password", type=str,
+                           help="password for tunnel encryption")
+    kdf_group.add_argument("-k", "--key", type=str,
+                           help="base64 encoded key")
+    parser.add_argument("-T", "--socket-timeout", type=int, metavar="TIMEOUT",
+                        help="socket timeout in seconds")
+    parser.add_argument("-c", "--config", type=argparse.FileType("r+", encoding="utf-8"),
+                        help="config")
+    return parser
