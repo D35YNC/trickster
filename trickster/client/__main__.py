@@ -8,7 +8,7 @@ from trickster.tunnel.udp import UDPPortal
 from trickster.tunnel.tcp import TCPPortal
 from trickster.tunnel.icmp import ICMPPortal
 
-from trickster.utils.args import verify_tunnel_opts, create_tunnel_parser
+from trickster.utils.args import verify_tunnel_opts, create_client_parser
 from trickster.utils.encryption import kdf
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def tunnel_main():
     transport = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.TransportOnly}
     universal = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.Both}
 
-    parser = create_tunnel_parser(list(enter.keys()), list(transport.keys()), list(universal.keys()))
+    parser = create_client_parser(list(enter.keys()), list(transport.keys()), list(universal.keys()))
     args = parser.parse_args()
     _LOGGER.debug(args)
 
