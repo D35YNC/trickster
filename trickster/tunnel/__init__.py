@@ -1,9 +1,13 @@
 import abc
+import enum
+import logging
 import select
 import socket
 
 from trickster.transport import TricksterPayload
-from trickster.utils.logging import create_full_logger
+
+_LOGGER = logging.getLogger(__name__)
+__version__ = "0.1"
 
 _LOGGER = create_full_logger(__name__)
 

@@ -1,22 +1,35 @@
-import argparse
+import base64
+import logging
 
 from trickster.tunnel import Tunnel
-from trickster.utils.portal_factory import PortalFactory
+from trickster.tunnel import Portal
+from trickster.tunnel import PortalSide
+from trickster.tunnel.udp import UDPPortal
+from trickster.tunnel.tcp import TCPPortal
+from trickster.tunnel.icmp import ICMPPortal
+
+from trickster.utils.args import verify_tunnel_opts, create_tunnel_parser
+from trickster.utils.encryption import kdf
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def tunnel_main():
-    parser = argparse.ArgumentParser(description="trickster.tunnel is sussy amongus sus impostor tunnel")
+    enter = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.EntryOnly}
+    transport = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.TransportOnly}
+    universal = {cls.__name__[:-6].lower(): cls for cls in Portal.__subclasses__() if cls.side() == PortalSide.Both}
 
-    parser.add_argument("enter", type=str,
-                        help="tunnel enter point url-like string: tcp://127.0.0.1:1080")
-    parser.add_argument("exit", type=str,
-                        help="tunnel enter point url-like string: icmp://TARGET")
-    parser.add_argument("-t", "--remote", type=str,
-                        help="tunnel destination point: ip:port")
+    parser = create_tunnel_parser(list(enter.keys()), list(transport.keys()), list(universal.keys()))
     args = parser.parse_args()
+    _LOGGER.debug(args)
 
-    enter_portal = PortalFactory.from_url(args.enter + "/enter")
-    exit_portal = PortalFactory.from_url(args.exit + "/exit")
+    if args.password:
+        args.key = kdf(args.password)
+    elif args.key:
+        args.key = base64.b64decode(args.key)
+
+    if args.key:
+        _LOGGER.debug(f"Key: {args.key[:8]}...{args.key[-8:]}")
 
     if args.remote:
         dst, dst_port = args.remote.split(':')
